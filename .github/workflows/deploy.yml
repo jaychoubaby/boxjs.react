@@ -9,7 +9,7 @@ on:
 jobs:
 
   deploy:
-    if: github.repository == 'dompling/boxjs.react'
+    if: github.repository == 'jaychoubaby/boxjs.react'
     runs-on: ubuntu-latest
 
     steps:
