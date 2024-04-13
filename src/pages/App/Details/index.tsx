@@ -1,6 +1,8 @@
 import DetailForm from "@/pages/App/Details/components/DetailForm";
 import EditForm from "@/pages/App/Details/components/EditForm";
+import { colorText } from "@/utils";
 import { history, useModel, useParams } from "@@/exports";
+import { CopyAll } from "@mui/icons-material";
 import CloseIcon from "@mui/icons-material/Close";
 import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
@@ -24,7 +26,7 @@ import {
 import $copy from "copy-to-clipboard";
 import React, { useState } from "react";
 import uuid from "react-uuid";
-import { colorText } from "@/utils";
+import ProFormSelectAppKey from "@/components/ProFormSelectAppKey";
 
 const CusBadge = styled(Badge)(({ theme }) => ({
   right: "unset",
@@ -75,7 +77,7 @@ function a11yProps(index: number) {
 
 export default function Page() {
   const { initialState } = useModel("@@initialState");
-  const params = useParams<{ id: string; name: string }>();
+  const params = useParams<{ id: string }>();
   const id = params?.id;
   const [open, setOpen] =
     useState<
@@ -87,9 +89,7 @@ export default function Page() {
   const datas = initialState?.boxdata.datas;
   const sessions = initialState?.boxdata.sessions || [];
 
-  const app = initialState?.apps.find(
-    (item) => item.id === id && item.author === params.name
-  );
+  const app = initialState?.apps.find((item) => item.id === id);
 
   const appSession = sessions?.filter((item) => item?.appId === `${id}`);
 
@@ -329,7 +329,36 @@ export default function Page() {
                 return (
                   <ListItem sx={{ p: 0 }} key={item.key}>
                     <ListItemText
-                      primary={item.key}
+                      primary={
+                        <>
+                          <span
+                            style={{
+                              maxWidth: "85%",
+                              display: "inline-block",
+                              textOverflow: "ellipsis",
+                              overflow: "hidden",
+                              height: "100%",
+                              verticalAlign: "middle",
+                            }}
+                          >
+                            {item.key}
+                          </span>
+                          {item.val && (
+                            <IconButton
+                              onClick={() => {
+                                $copy(item.val);
+                                tip.alert({
+                                  open: true,
+                                  message: "复制成功",
+                                  type: "success",
+                                });
+                              }}
+                            >
+                              <CopyAll fontSize="small" />
+                            </IconButton>
+                          )}
+                        </>
+                      }
                       primaryTypographyProps={{
                         noWrap: true,
                         variant: "caption",
@@ -337,9 +366,9 @@ export default function Page() {
                       }}
                       secondary={
                         <Typography
+                          noWrap
                           color="grey"
                           variant="caption"
-                          noWrap
                           component={"div"}
                         >
                           {(typeof item.val === "object" && !!item.val
@@ -348,6 +377,7 @@ export default function Page() {
                         </Typography>
                       }
                     />
+
                     <IconButton
                       onClick={() => {
                         const datas = [...(curSession?.datas || [])];

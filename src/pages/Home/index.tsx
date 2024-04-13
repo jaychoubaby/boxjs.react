@@ -51,7 +51,6 @@ const GridItem: React.FC<{
     () => ({
       type: "grid",
       item: { id, originalIndex },
-
       collect: (monitor) => {
         const clientOffset = monitor.getSourceClientOffset();
         let offset = { x: 0, y: 0 };
@@ -106,14 +105,13 @@ const GridItem: React.FC<{
         <Item
           ref={(node) => drag(drop(node))}
           onClick={() => {
-            const timeKey = `${item?.id}/${item?.author}`;
+            const timeKey = `${item?.id}`;
             if (timeoutCount[timeKey] === undefined) timeoutCount[timeKey] = 0;
             timeoutCount[timeKey] += 1;
 
             timeout[timeKey] = setTimeout(() => {
               if (timeout[timeKey] !== undefined)
                 clearTimeout(timeout[timeKey]);
-              console.log(timeoutCount[timeKey]);
               if (timeoutCount[timeKey] === 2) {
                 timeoutCount[timeKey] = 0;
 
@@ -144,6 +142,7 @@ const GridItem: React.FC<{
                 sx={{
                   width: "100%",
                   height: "100%",
+                  background: "#ECECEE",
                 }}
               />
               {fetchRunScript.fetches[`${script}`]?.loading && (
@@ -289,6 +288,7 @@ export default function Home() {
     <Box pt={4} component={"div"}>
       <DndProvider
         backend={initialState?.isMobile ? TouchBackend : HTML5Backend}
+        options={{ delay: 400 }}
       >
         <Page />
       </DndProvider>

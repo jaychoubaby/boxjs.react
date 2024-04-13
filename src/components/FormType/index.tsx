@@ -1,6 +1,6 @@
 import { IOSSwitch } from "@/components/IOSSwitch";
+import ProFormSelectAppKey from "@/components/ProFormSelectAppKey";
 import { useModel } from "@@/exports";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
@@ -15,7 +15,6 @@ import {
   FormControlLabel,
   FormHelperText,
   FormLabel,
-  IconButton,
   Input,
   InputLabel,
   MenuItem,
@@ -101,6 +100,7 @@ const renderFormItem = (data: boxjs.Setting, form?: UseFormReturn<any>) => {
   const formItemProps = {
     name: data.formName || formName,
     control: form?.control,
+    rules: { pattern: data.pattern },
   };
 
   return (
@@ -110,41 +110,49 @@ const renderFormItem = (data: boxjs.Setting, form?: UseFormReturn<any>) => {
           <InputLabel htmlFor={data.id}>{data.name}</InputLabel>
           <Controller
             {...formItemProps}
-            render={({ field }) => {
+            render={({ field, formState }) => {
               return (
-                <Input
-                  id={data.id}
-                  size="small"
-                  type={data.type}
-                  disabled={data.disabled}
-                  placeholder={data.placeholder}
-                  {...field}
-                />
+                <>
+                  <Input
+                    id={data.id}
+                    size="small"
+                    type={data.type}
+                    disabled={data.disabled}
+                    placeholder={data.placeholder}
+                    {...field}
+                  />
+                  <CusFormHelperText
+                    text={data.desc}
+                    error={!!formState.errors[field.name]}
+                  />
+                </>
               );
             }}
           />
-          <CusFormHelperText text={data.desc} />
         </FormControl>
       )}
 
       {data.type === "textarea" && !data.child && (
         <Controller
           {...formItemProps}
-          render={({ field }) => (
-            <TextField
-              fullWidth
-              multiline
-              id={data.id}
-              size="small"
-              label={data.name}
-              variant="standard"
-              rows={6 || data.rows}
-              helperText={data.desc}
-              disabled={data.disabled}
-              placeholder={data.placeholder}
-              {...field}
-            />
-          )}
+          render={({ field, formState }) => {
+            return (
+              <TextField
+                fullWidth
+                multiline
+                id={data.id}
+                size="small"
+                label={data.name}
+                variant="standard"
+                rows={6 || data.rows}
+                helperText={data.desc}
+                disabled={data.disabled}
+                placeholder={data.placeholder}
+                error={!!formState.errors[field.name]}
+                {...field}
+              />
+            );
+          }}
         />
       )}
 
@@ -170,23 +178,21 @@ const renderFormItem = (data: boxjs.Setting, form?: UseFormReturn<any>) => {
         <Stack>
           <Controller
             {...formItemProps}
-            render={({ field }) => (
-              <FormControlLabel
-                label={data.name}
-                control={
-                  <IOSSwitch
-                    sx={{ m: 1 }}
-                    disabled={data.disabled}
-                    checked={
-                      field.value === "true" || field.value === true
-                        ? true
-                        : false
-                    }
-                    onChange={(e) => field.onChange(e.target.checked)}
-                  />
-                }
-              />
-            )}
+            render={({ field }) => {
+              return (
+                <FormControlLabel
+                  label={data.name}
+                  control={
+                    <IOSSwitch
+                      sx={{ m: 1 }}
+                      disabled={data.disabled}
+                      checked={field.value === "true" || field.value === true}
+                      onChange={(e) => field.onChange(e.target.checked)}
+                    />
+                  }
+                />
+              );
+            }}
           />
           <FormHelperText sx={{ minHeight: 20 }}>{data.desc}</FormHelperText>
         </Stack>
@@ -241,6 +247,7 @@ const renderFormItem = (data: boxjs.Setting, form?: UseFormReturn<any>) => {
       )}
 
       {[
+        "cacheKey",
         "text",
         "textarea",
         "selects",
@@ -254,18 +261,25 @@ const renderFormItem = (data: boxjs.Setting, form?: UseFormReturn<any>) => {
           <InputLabel htmlFor={data.id}>{data.name}</InputLabel>
           <Controller
             {...formItemProps}
-            render={({ field }) => (
-              <Input
-                id={data.id}
-                size="small"
-                type={data.type}
-                disabled={data.disabled}
-                placeholder={data.placeholder}
-                {...field}
-              />
-            )}
+            render={({ field, formState }) => {
+              return (
+                <>
+                  <Input
+                    id={data.id}
+                    size="small"
+                    type={data.type}
+                    disabled={data.disabled}
+                    placeholder={data.placeholder}
+                    {...field}
+                  />
+                  <CusFormHelperText
+                    text={data.desc}
+                    error={!!formState.errors[field.name]}
+                  />
+                </>
+              );
+            }}
           />
-          <CusFormHelperText text={data.desc} />
         </FormControl>
       )}
 
@@ -274,21 +288,23 @@ const renderFormItem = (data: boxjs.Setting, form?: UseFormReturn<any>) => {
           <FormLabel component="legend">{data.name}</FormLabel>
           <Controller
             {...formItemProps}
-            render={({ field }) => (
-              <RadioGroup {...field}>
-                {data.items?.map((radio) => {
-                  return (
-                    <FormControlLabel
-                      key={radio.key}
-                      value={radio.key}
-                      label={radio.label}
-                      control={<Radio />}
-                      disabled={data.disabled}
-                    />
-                  );
-                })}
-              </RadioGroup>
-            )}
+            render={({ field }) => {
+              return (
+                <RadioGroup {...field}>
+                  {data.items?.map((radio) => {
+                    return (
+                      <FormControlLabel
+                        key={radio.key}
+                        value={radio.key}
+                        label={radio.label}
+                        control={<Radio />}
+                        disabled={data.disabled}
+                      />
+                    );
+                  })}
+                </RadioGroup>
+              );
+            }}
           />
           <FormHelperText sx={{ minHeight: 20 }}>{data.desc}</FormHelperText>
         </FormControl>
@@ -299,27 +315,49 @@ const renderFormItem = (data: boxjs.Setting, form?: UseFormReturn<any>) => {
           <InputLabel htmlFor={data.id}>{data.name}</InputLabel>
           <Controller
             {...formItemProps}
-            render={({ field }) => (
-              <Select
-                placeholder="请选择"
-                sx={{ width: `100%` }}
-                MenuProps={{ sx: { maxHeight: 300 } }}
-                {...field}
-              >
-                {data.items?.map((item, index) => {
-                  return (
-                    <MenuItem key={`${item.key}_${index}`} value={item.key}>
-                      {item.label}
-                    </MenuItem>
-                  );
-                })}
-              </Select>
-            )}
+            render={({ field }) => {
+              return (
+                <Select
+                  placeholder="请选择"
+                  sx={{ width: `100%` }}
+                  MenuProps={{ sx: { maxHeight: 300 } }}
+                  {...field}
+                >
+                  {data.items?.map((item, index) => {
+                    return (
+                      <MenuItem key={`${item.key}_${index}`} value={item.key}>
+                        {item.label}
+                      </MenuItem>
+                    );
+                  })}
+                </Select>
+              );
+            }}
           />
           <CusFormHelperText text={data.desc} />
         </FormControl>
       )}
-
+      {data.type === "cacheKey" && (
+        <FormControl size="small" sx={{ width: 1 }} variant="standard">
+          <Controller
+            {...formItemProps}
+            render={({ field, formState }) => {
+              return (
+                <>
+                  <InputLabel htmlFor={data.id} shrink={!!field.value}>
+                    {data.name}
+                  </InputLabel>
+                  <ProFormSelectAppKey {...field} />
+                  <CusFormHelperText
+                    text={data.desc}
+                    error={!!formState.errors[field.name]}
+                  />
+                </>
+              );
+            }}
+          />
+        </FormControl>
+      )}
       {data.type === "colorpicker" && (
         <FormControl size="small" sx={{ width: 1 }} variant="standard">
           <InputLabel
@@ -343,7 +381,6 @@ const renderFormItem = (data: boxjs.Setting, form?: UseFormReturn<any>) => {
               );
             }}
           />
-
           <CusFormHelperText text={data.desc} />
         </FormControl>
       )}
@@ -410,7 +447,6 @@ const FormList: React.FC<{
     <>
       <Drawer anchor={"bottom"} open={open} onClose={() => handelDrawerClose()}>
         <Box
-          className={styles.add}
           sx={{
             pt: 1,
             pb: 1,
@@ -418,18 +454,13 @@ const FormList: React.FC<{
             borderColor: "divider",
             boxShadow: (theme) => theme.shadows[2],
             position: "fixed",
-            top: 0,
             width: `100%`,
             bgcolor: "inherit",
             zIndex: 99,
           }}
         >
           <Stack direction={"row"} alignItems={"center"}>
-            <IconButton color="inherit" onClick={() => setOpen(false)}>
-              <ChevronLeftIcon />
-            </IconButton>
-
-            <Typography sx={{ flexGrow: 1 }}>
+            <Typography sx={{ flexGrow: 1, pl: 1 }}>
               {drawerTitle}-{setting?.name}
             </Typography>
             <Button
@@ -459,7 +490,7 @@ const FormList: React.FC<{
             </Button>
           </Stack>
         </Box>
-        <Stack sx={{ pt: 8, pl: 2, pr: 2, height: `100vh` }}>
+        <Stack sx={{ pt: 10, pl: 2, pr: 2, height: `60vh`, maxHeight: `60vh` }}>
           {formItems && drawerTitle === "新增" ? (
             formItems?.map((settingKey, index) => {
               let settingItem: boxjs.Setting = child[settingKey] || {

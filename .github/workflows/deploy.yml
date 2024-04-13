@@ -40,7 +40,12 @@ jobs:
 
       - name: Build
         id: build
-        run: yarn build # 打包
+        run: yarn build:github # 打包
+
+      - name: Copy to 404
+        id: Copy
+        run: cp index.html 404.html
+        working-directory: ./dist
 
       # 部署到 GitHub pages
       - name: Deploy

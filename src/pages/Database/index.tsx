@@ -1,23 +1,104 @@
+import ProFormSelectAppKey from "@/components/ProFormSelectAppKey";
+import config from "@/utils/config";
 import { useModel } from "@@/exports";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   Box,
   Button,
+  Chip,
   Divider,
+  FormHelperText,
   Paper,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
+import Accordion from "@mui/material/Accordion";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import AccordionSummary from "@mui/material/AccordionSummary";
 import $copy from "copy-to-clipboard";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 
 export default function Database() {
   const form = useForm();
   const tip = useModel("alert");
-  const { fetchDataKey, fetchSaveData } = useModel("api");
+  const { expanded, handleExpandedChange } = useModel("app");
+  const { fetchDataKey, fetchSave } = useModel("api");
+  const { initialState } = useModel("@@initialState");
+  const dataKeys = Object.keys(initialState?.boxdata.datas || {});
+  const gistCacheData = initialState?.boxdata.usercfgs.gist_cache_key || [];
+  const viewkeys = initialState?.boxdata.usercfgs.viewkeys || [];
+  const accordion = [
+    {
+      data: gistCacheData,
+      key: config.gistCacheKey,
+      title: `非订阅数据（${gistCacheData.length}）`,
+    },
+    {
+      key: config.viewkeys,
+      title: `近期查看（${viewkeys.length}）`,
+      data: viewkeys,
+    },
+  ];
 
   return (
     <Stack spacing={3} m={1}>
+      {accordion.map((tab, index) => {
+        if (!tab.data.length) return null;
+        return (
+          <Stack key={tab.title} direction="column" mt={2}>
+            <Accordion
+              onChange={handleExpandedChange(tab.key)}
+              expanded={expanded.indexOf(tab.key) !== -1}
+            >
+              <AccordionSummary
+                sx={{ m: 0 }}
+                expandIcon={<ExpandMoreIcon />}
+                aria-controls={`panel${index}-content`}
+                id={`panel${index}-header`}
+              >
+                <Typography variant="body2">{tab.title}</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <div style={{ display: "flex", flexWrap: "wrap" }}>
+                  {tab.data.map((item: string, index: number) => {
+                    return (
+                      <div key={`${item}_${index}`} style={{ padding: 3 }}>
+                        <Chip
+                          label={item}
+                          variant="filled"
+                          sx={{
+                            maxWidth: 160,
+                            "& span": { width: `100%` },
+                            boxShadow: (theme) =>
+                              `0px 0 1px ${theme.palette.primary.main}`,
+                          }}
+                          onDelete={() => {
+                            fetchSave.run([
+                              {
+                                key: tab.key,
+                                val: tab.data.filter(
+                                  (cache: string) => cache !== item
+                                ),
+                              },
+                            ]);
+                          }}
+                          onClick={() => {
+                            form.setValue("key", item);
+                            fetchDataKey.run(item).then((response) => {
+                              form.setValue("data", response.val);
+                            });
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </AccordionDetails>
+            </Accordion>
+          </Stack>
+        );
+      })}
       <Paper elevation={3} sx={{ pt: 2 }}>
         <Box pr={2} pl={2} pb={1}>
           <Stack
@@ -50,18 +131,28 @@ export default function Database() {
               复制
             </Typography>
           </Stack>
-          <TextField
-            fullWidth
-            size="small"
-            variant="standard"
-            placeholder={"数据键 (Key)"}
-            InputLabelProps={{
-              shrink: true,
+          <Controller
+            name={"key"}
+            control={form.control}
+            render={({ field }) => {
+              return (
+                <ProFormSelectAppKey
+                  fullWidth
+                  size="small"
+                  placeholder={"数据键 (Key)"}
+                  {...field}
+                  onChange={(val) => {
+                    form.setValue("data", "");
+                    field.onChange(val);
+                  }}
+                />
+              );
             }}
-            helperText={"输入要查询的数据键, 如: boxjs_host"}
-            {...form.register("key")}
           />
+
+          <FormHelperText>输入要查询的数据键, 如: boxjs_host</FormHelperText>
         </Box>
+
         <Divider />
         <Stack spacing={2} justifyContent={"flex-end"} pt={1} pb={1}>
           <Button
@@ -76,12 +167,18 @@ export default function Database() {
                   message: "请输入数据 KEY",
                   type: "warning",
                 });
+              if (!viewkeys.includes(key)) {
+                fetchSave.run({
+                  key: config.viewkeys,
+                  val: [key, ...viewkeys],
+                });
+              }
               fetchDataKey.run(key).then((response) => {
                 form.setValue("data", response.val);
               });
             }}
           >
-            VIEW
+            查询
           </Button>
         </Stack>
       </Paper>
@@ -146,7 +243,19 @@ export default function Database() {
                   message: "请输入数据 KEY",
                   type: "warning",
                 });
-              fetchSaveData.run({ key, val: data });
+              const formData = [{ key, val: data }];
+              if (!dataKeys.includes(key) && !gistCacheData.includes(key)) {
+                formData.push({
+                  key: config.gistCacheKey,
+                  val: [key, ...gistCacheData],
+                });
+              } else if (gistCacheData.includes(key) && !data) {
+                formData.push({
+                  key: config.gistCacheKey,
+                  val: gistCacheData.filter((item: string) => item !== key),
+                });
+              }
+              fetchSave.run(formData);
             }}
           >
             保存

@@ -50,6 +50,7 @@ declare namespace boxjs {
     changeBgImgOutDefault: string;
     debugger_web: string;
     sysapppanel: number;
+    gist_cache_key?: string[];
   }
 
   export interface Appsub {
@@ -192,6 +193,7 @@ declare namespace boxjs {
 
   export interface App {
     id: string;
+    _id: string;
     name: string;
     keys: string[];
     descs_html: string[];
@@ -216,7 +218,8 @@ declare namespace boxjs {
       | "radios"
       | "checkboxes"
       | "colorpicker"
-      | "number";
+      | "number"
+      | "cacheKey";
     desc: string;
     disabled?: boolean;
     items?: Item[];
@@ -225,7 +228,7 @@ declare namespace boxjs {
     rows?: number;
     primary?: string[];
     child?: Setting[];
-
+    pattern?: RegExp;
     formName: string;
   }
 

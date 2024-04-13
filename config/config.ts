@@ -2,40 +2,53 @@ import { defineConfig } from "@umijs/max";
 import MonacoWebpackPlugin from "monaco-editor-webpack-plugin";
 import routes from "./routes";
 
-//@ts-ignore
-const isDev = process.env.NODE_ENV === "development";
-const path = isDev ? "/" : "./";
-
 export default defineConfig({
   routes,
   hash: true,
-  history: {
-    type: "hash",
-  },
+  reactRouter5Compat: {},
   title: "BoxJs",
   //打包路径
-  // base: path,
-  publicPath: path,
   codeSplitting: {
-    jsStrategy: "granularChunks",
+    jsStrategy: "bigVendors",
   },
   metas: [
     {
+      name: "viewport",
+      content:
+        "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover",
+    },
+    {
       "http-equiv": "Permissions-Policy",
       content: "interest-cohort=()",
+    },
+    {
+      name: "keywords",
+      content: "react, boxjs, umi, surge, qx,loon ,stash",
+    },
+    {
+      name: "description",
+      content: "online boxjs",
     },
     {
       name: "apple-mobile-web-app-capable",
       content: "yes",
     },
     {
+      name: "mobile-web-app-capable",
+      content: "yes",
+    },
+    {
+      name: "apple-mobile-web-app-title",
+      content: "BoxJs",
+    },
+    {
       name: "apple-mobile-web-app-status-bar-style",
       content: "black-translucent",
     },
     {
-      name: "viewport",
+      name: "apple-touch-startup-image",
       content:
-        "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover",
+        "https://raw.githubusercontent.com/chavyleung/scripts/master/BOXJS.png",
     },
   ],
   links: [
@@ -49,12 +62,18 @@ export default defineConfig({
       href: "https://raw.githubusercontent.com/chavyleung/scripts/master/BOXJS.png",
     },
     {
+      rel: "manifest",
+      href: "./manifest.json",
+    },
+    {
       rel: "apple-touch-icon",
       sizes: "60x60",
       href: "https://raw.githubusercontent.com/chavyleung/scripts/master/BOXJS.png",
     },
   ],
-
+  scripts: [
+    `(function(document,navigator,standalone){if((standalone in navigator)&&navigator[standalone]){var curnode,location=document.location,stop=/^(a|html)$/i;document.addEventListener('click',function(e){curnode=e.target;while(!(stop).test(curnode.nodeName)){curnode=curnode.parentNode}if('href'in curnode&&(chref=curnode.href).replace(location.href,'').indexOf('#')&&(!(/^[a-z\\+\\.\\-]+:/i).test(chref)||chref.indexOf(location.protocol+'//'+location.host)===0)){e.preventDefault();location.href=curnode.href}},false)}})(document,window.navigator,'standalone');`,
+  ],
   model: {},
   antd: false,
   request: {},
@@ -112,7 +131,6 @@ export default defineConfig({
         },
       },
     });
-
     return config;
   },
   analyze: {
@@ -124,8 +142,5 @@ export default defineConfig({
     statsFilename: "stats.json",
     logLevel: "info",
     defaultSizes: "parsed", // stat  // gzip
-  },
-  define: {
-    "process.env.ROOT_PATH": isDev ? "" : "/boxjs.react",
   },
 });
