@@ -1,8 +1,10 @@
 import { IOSSwitch } from "@/components/IOSSwitch";
+import ProFormModalSelect from "@/components/ProFormModalSelect";
 import ProFormSelectAppKey from "@/components/ProFormSelectAppKey";
-import { useModel } from "@@/exports";
+import { history, useModel } from "@@/exports";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
 import {
   Accordion,
   AccordionDetails,
@@ -10,13 +12,17 @@ import {
   Box,
   Button,
   Checkbox,
+  CircularProgress,
   Drawer,
   FormControl,
   FormControlLabel,
   FormHelperText,
   FormLabel,
+  IconButton,
   Input,
   InputLabel,
+  List,
+  ListItem,
   MenuItem,
   Radio,
   RadioGroup,
@@ -61,6 +67,18 @@ function CusFormHelperText({ text, ...props }: any) {
       ) : null}
     </QueueAnim>
   );
+}
+
+function getOption(data: string | { label: string; key: string }) {
+  let options = { label: "", key: "" };
+
+  if (typeof data === "string") {
+    options.label = data;
+    options.key = data;
+  } else {
+    options = data;
+  }
+  return options;
 }
 
 const FormPickerColor: React.FC<{
@@ -207,33 +225,36 @@ const renderFormItem = (data: boxjs.Setting, form?: UseFormReturn<any>) => {
             render={({ field }) => {
               const isStr = typeof field.value === "string";
               const fieldValue =
-                (isStr ? field.value.split(",") : field.value) || [];
+                (isStr && field.value ? field.value.split(",") : field.value) ||
+                [];
+
               return (
                 <>
                   {data.items?.map((checkbox) => {
+                    const options = getOption(checkbox);
                     return (
                       <FormControlLabel
-                        key={checkbox.key}
+                        key={options.key}
                         control={
                           <Checkbox
-                            checked={fieldValue?.includes(checkbox.key)}
+                            checked={fieldValue?.includes(options.key)}
                             onChange={(e) => {
                               let newValue: string[] = fieldValue;
-
                               if (e.target.checked) {
-                                newValue.push(checkbox.key);
+                                newValue.push(options.key);
                               } else {
                                 newValue = newValue.filter(
-                                  (f) => f != checkbox.key
+                                  (f) => f != options.key
                                 );
                               }
+
                               field.onChange(
                                 isStr ? newValue.join(",") : newValue
                               );
                             }}
                           />
                         }
-                        label={checkbox.label}
+                        label={options.label}
                         disabled={data.disabled}
                       />
                     );
@@ -247,6 +268,7 @@ const renderFormItem = (data: boxjs.Setting, form?: UseFormReturn<any>) => {
       )}
 
       {[
+        "modalSelects",
         "cacheKey",
         "text",
         "textarea",
@@ -292,11 +314,12 @@ const renderFormItem = (data: boxjs.Setting, form?: UseFormReturn<any>) => {
               return (
                 <RadioGroup {...field}>
                   {data.items?.map((radio) => {
+                    const options = getOption(radio);
                     return (
                       <FormControlLabel
-                        key={radio.key}
-                        value={radio.key}
-                        label={radio.label}
+                        key={options.key}
+                        value={options.key}
+                        label={options.label}
                         control={<Radio />}
                         disabled={data.disabled}
                       />
@@ -324,9 +347,13 @@ const renderFormItem = (data: boxjs.Setting, form?: UseFormReturn<any>) => {
                   {...field}
                 >
                   {data.items?.map((item, index) => {
+                    const options = getOption(item);
                     return (
-                      <MenuItem key={`${item.key}_${index}`} value={item.key}>
-                        {item.label}
+                      <MenuItem
+                        key={`${options.key}_${index}`}
+                        value={options.key}
+                      >
+                        {options.label}
                       </MenuItem>
                     );
                   })}
@@ -337,6 +364,33 @@ const renderFormItem = (data: boxjs.Setting, form?: UseFormReturn<any>) => {
           <CusFormHelperText text={data.desc} />
         </FormControl>
       )}
+
+      {data.type === "modalSelects" && (
+        <FormControl sx={{ m: 1 }} variant="standard">
+          <Controller
+            {...formItemProps}
+            render={({ field, formState }) => {
+              return (
+                <>
+                  <InputLabel htmlFor={data.id} shrink={!!field.value}>
+                    {data.name}
+                  </InputLabel>
+                  <ProFormModalSelect
+                    inputProps={{ shrink: "true" }}
+                    {...field}
+                    items={data.items}
+                  />
+                  <CusFormHelperText
+                    text={data.desc}
+                    error={!!formState.errors[field.name]}
+                  />
+                </>
+              );
+            }}
+          />
+        </FormControl>
+      )}
+
       {data.type === "cacheKey" && (
         <FormControl size="small" sx={{ width: 1 }} variant="standard">
           <Controller
@@ -398,6 +452,8 @@ const FormList: React.FC<{
     control: form?.control,
   });
 
+  const { fetchRunScript } = useModel("api");
+
   const formDrawer = useForm();
   const tip = useModel("alert");
 
@@ -441,6 +497,59 @@ const FormList: React.FC<{
   const handelDrawerClose = () => {
     setOpen(false);
     formDrawer.reset();
+  };
+
+  const renderChildScripts = () => {
+    return setting?.childScripts ? (
+      <List disablePadding>
+        {setting?.childScripts?.map((item, index) => {
+          return (
+            <ListItem
+              key={item.name}
+              sx={{ padding: 0, mb: 2 }}
+              secondaryAction={
+                <IconButton
+                  edge="end"
+                  sx={{ mr: -3.5 }}
+                  aria-label={item.name}
+                  onClick={() => {
+                    if (fetchRunScript.loading) return;
+                    const params =
+                      form?.control._formValues[name][index] ||
+                      formDrawer.getValues();
+                    fetchRunScript.run({
+                      url: item.script,
+                      isRemote: true,
+                      argument:
+                        typeof params === "object"
+                          ? JSON.stringify(params)
+                          : params,
+                    });
+                  }}
+                >
+                  {fetchRunScript.loading ? (
+                    <CircularProgress size={24} />
+                  ) : (
+                    <PlayCircleFilledIcon />
+                  )}
+                </IconButton>
+              }
+            >
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 500 }}
+                component={"span"}
+                onClick={() => {
+                  history.push(`/code?url=${item.script}`);
+                }}
+              >
+                {`${index + 1}.${item.name}`}
+              </Typography>
+            </ListItem>
+          );
+        })}
+      </List>
+    ) : null;
   };
 
   return (
@@ -491,6 +600,7 @@ const FormList: React.FC<{
           </Stack>
         </Box>
         <Stack sx={{ pt: 10, pl: 2, pr: 2, height: `60vh`, maxHeight: `60vh` }}>
+          {renderChildScripts()}
           {formItems && drawerTitle === "新增" ? (
             formItems?.map((settingKey, index) => {
               let settingItem: boxjs.Setting = child[settingKey] || {
@@ -548,6 +658,7 @@ const FormList: React.FC<{
               <Typography variant="body2">{title?.join("-")}</Typography>
             </AccordionSummary>
             <AccordionDetails>
+              {renderChildScripts()}
               {expanded === id &&
                 formItems?.map((settingKey) => {
                   let settingItem: boxjs.Setting = child[settingKey] || {

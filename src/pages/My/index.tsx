@@ -4,6 +4,7 @@ import ModalSettingForm from "@/pages/My/components/ModalSettingForm";
 
 import ModalBackgroundForm from "@/pages/My/components/ModalBackgroundForm";
 import ModalHttpApiForm from "@/pages/My/components/ModalHttpApiForm";
+import ModalSettingsHeightForm from "@/pages/My/components/ModalSettingsHeightForm";
 import ModalThemeForm from "@/pages/My/components/ModalThemeForm";
 import { colorText } from "@/utils";
 import config from "@/utils/config";
@@ -16,6 +17,7 @@ import BugReportIcon from "@mui/icons-material/BugReport";
 import CodeIcon from "@mui/icons-material/Code";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import Face5Icon from "@mui/icons-material/Face5";
+import HeightIcon from "@mui/icons-material/Height";
 import ImageIcon from "@mui/icons-material/Image";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import LightModeIcon from "@mui/icons-material/LightMode";
@@ -158,7 +160,6 @@ export default function Page() {
           id: "isHideHelp",
           icon: <QuestionMarkIcon sx={{ color: colors.amber[400] }} />,
         },
-
         {
           type: "switch",
           label: "隐藏编码按钮",
@@ -188,6 +189,15 @@ export default function Page() {
               },
             ]
           : []),
+
+        {
+          type: "input",
+          label: "应用内容高度",
+          id: "app_settings_height",
+          val: usercfgs?.app_settings_height,
+          icon: <HeightIcon sx={{ color: colors.teal[400] }} />,
+          onClick: () => handleVisible(`app_settings_height`, true),
+        },
         {
           label: "勿扰模式",
           type: "switch",
@@ -307,6 +317,12 @@ export default function Page() {
         open={visible.debugger_web}
         value={usercfgs?.debugger_web}
         onClose={() => handleVisible(`debugger_web`)}
+      />
+
+      <ModalSettingsHeightForm
+        open={visible.app_settings_height}
+        value={usercfgs?.app_settings_height}
+        onClose={() => handleVisible(`app_settings_height`)}
       />
 
       <ModalBackgroundForm

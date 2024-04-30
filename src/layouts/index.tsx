@@ -83,7 +83,6 @@ export default function Layout() {
         }
       >
         {!["/my"].includes(location.pathname) && <HeaderContent />}
-        <BoxJSActions />
         <div
           draggable={false}
           style={{
@@ -151,6 +150,10 @@ export default function Layout() {
 
         <FooterToolNav />
       </Box>
+      {initialState?.boxdata?.usercfgs?.isHideBoxIcon !== true && (
+        <BoxJSActions />
+      )}
+
       <OutPut
         open={log.visible}
         value={fetchRunScript.data}

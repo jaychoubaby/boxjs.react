@@ -5,12 +5,13 @@
     min-height: 100vh;
     overflow-x: hidden;
     max-width: unset !important;
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
+    padding-left: 0.8rem;
+    padding-right: 0.8rem;
     padding-top: calc(4.8rem + constant(safe-area-inset-top));
     padding-top: calc(4.8rem + env(safe-area-inset-top));
-    padding-bottom: calc(10rem + constant(safe-area-inset-top));
-    padding-bottom: calc(10rem + env(safe-area-inset-top));
+    padding-bottom: calc(70px + constant(safe-area-inset-top));
+    padding-bottom: calc(70px + env(safe-area-inset-top));
+    box-sizing: border-box;
   }
 
   .my {
@@ -20,11 +21,10 @@
   }
 
   .alert {
-
     top: calc(1rem + constant(safe-area-inset-top));
     top: calc(1rem + env(safe-area-inset-top));
-    left: 1.5rem !important;
-    right: 1.5rem !important;
+    left: 0.5rem !important;
+    right: 0.5rem !important;
   }
 }
 
@@ -32,6 +32,7 @@
   .content {
     padding-top: calc(0.5rem + constant(safe-area-inset-top));
     padding-top: calc(0.5rem + env(safe-area-inset-top));
+    box-sizing: border-box;
   }
 
   .my {

@@ -10,6 +10,7 @@ const DetailForm: React.FC<{ formConfig: boxjs.Setting[] }> = ({
 }) => {
   const { initialState } = useModel("@@initialState");
   const { fetchSave } = useModel("api");
+  const usercfgs = initialState?.boxdata.usercfgs;
   let defaultValues: any = {};
   const initDefaultValue = () => {
     formConfig.forEach((setting) => {
@@ -18,7 +19,7 @@ const DetailForm: React.FC<{ formConfig: boxjs.Setting[] }> = ({
       if (dataVal === null) dataVal = undefined;
       try {
         defaultValues[setting.id.replaceAll(".", "~")] = setting.child
-          ? JSON.parse(`${dataVal || []}`)
+          ? JSON.parse(`${dataVal || "[]"}`)
           : dataVal;
       } catch (e) {
         console.log(e);
@@ -59,8 +60,23 @@ const DetailForm: React.FC<{ formConfig: boxjs.Setting[] }> = ({
       }}
       autoComplete="off"
     >
-      <Stack sx={{ pl: 2, pr: 2 }} spacing={1}>
-        {formConfig.map((setting) => {
+      <Stack
+        sx={{
+          pl: 2,
+          pr: 2,
+          ...(Number(usercfgs?.app_settings_height || "0") > 0
+            ? {
+                maxHeight: `${usercfgs?.app_settings_height}px`,
+                overflow: "auto",
+              }
+            : {}),
+        }}
+        spacing={1}
+      >
+        {formConfig.map((setting: any) => {
+          if (typeof setting.items === "string") {
+            setting.items = initialState?.boxdata.datas[setting.items] || [];
+          }
           return (
             <FormType
               form={form}

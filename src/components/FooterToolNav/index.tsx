@@ -12,32 +12,47 @@ import {
   Paper,
 } from "@mui/material";
 import { BottomNavigationActionProps } from "@mui/material/BottomNavigationAction/BottomNavigationAction";
+import lodash from "lodash";
 import QueueAnim from "rc-queue-anim";
 import React from "react";
 import styles from "./index.less";
 
+let taskLists: any[] = [];
 const FooterToolNav: React.FC = () => {
   const location = useLocation();
 
   const { initialState } = useModel("@@initialState");
-  const { loading } = useModel("api");
+  const { loading, fetchSave } = useModel("api");
   const boxdata = initialState?.boxdata;
+  const fontSize = 30;
+
+  const handelDoubleClick = () => {
+    fetchSave.run([
+      {
+        key: config.userCfgs,
+        val: JSON.stringify({
+          ...initialState?.boxdata.usercfgs,
+          isHideBoxIcon: !boxdata?.usercfgs.isHideBoxIcon,
+        }),
+      },
+    ]);
+  };
 
   const bottomNav: Record<string, BottomNavigationActionProps> = {
-    "/": {
+    "/home": {
       // label: '主页',
-      value: "/",
-      icon: <HomeIcon />,
+      value: "/home",
+      icon: <HomeIcon sx={{ fontSize }} />,
     },
     "/app": {
       // label: '应用',
       value: "/app",
-      icon: <WebAssetIcon />,
+      icon: <WebAssetIcon sx={{ fontSize }} />,
     },
     "/sub": {
       // label: '订阅',
       value: "/sub",
-      icon: <StorageIcon />,
+      icon: <StorageIcon sx={{ fontSize }} />,
     },
     "/my": {
       // label: '我的',
@@ -47,23 +62,47 @@ const FooterToolNav: React.FC = () => {
           <Avatar
             alt="boxJS"
             src={boxdata?.usercfgs.icon || config.logo}
-            sx={{ width: 24, height: 24 }}
+            sx={{
+              width: 34,
+              height: 34,
+              boxSizing: "border-box",
+              border: (theme) => `1px solid ${theme.palette.primary.main}`,
+            }}
           />
           {loading && (
             <CircularProgress
-              size={24}
+              size={35}
               sx={{
                 position: "absolute",
                 top: "50%",
                 left: "50%",
-                marginTop: "-12px",
-                marginLeft: "-12px",
+                marginTop: "-17px",
+                marginLeft: "-17px",
               }}
             />
           )}
         </Box>
       ),
     },
+  };
+  const handleClick = (nav: any) => {
+    if (location.pathname === nav.value) return;
+    if (nav.value === "/my") {
+      const taskItem = lodash.debounce(() => {
+        history.push(nav.value);
+        taskLists = [];
+      }, 200);
+      taskLists.push(taskItem);
+      console.log(taskLists.length);
+      if (taskLists.length === 2) {
+        lodash.map(taskLists, (task) => task.cancel());
+        taskLists = [];
+        return handelDoubleClick();
+      }
+      return taskItem();
+    } else {
+      history.push(nav.value);
+    }
   };
 
   return (
@@ -91,9 +130,6 @@ const FooterToolNav: React.FC = () => {
             <BottomNavigation
               showLabels
               value={location.pathname}
-              onChange={(_, key) => {
-                history.push(key);
-              }}
               sx={{
                 "& .Mui-selected": {
                   "&:after": {
@@ -102,25 +138,31 @@ const FooterToolNav: React.FC = () => {
                 },
               }}
             >
-              {Object.keys(bottomNav).map((key) => (
-                <BottomNavigationAction
-                  key={key}
-                  {...bottomNav[key]}
-                  sx={{
-                    "&:after": {
-                      content: `""`,
-                      position: "absolute",
-                      height: 2,
-                      width: 0,
-                      borderRadius: 1,
-                      background: (theme) => theme.palette.primary.main,
-                      top: 1,
-                      transition: `width 0.3s linear`,
-                      boxShadow: 1,
-                    },
-                  }}
-                />
-              ))}
+              {Object.keys(bottomNav).map((key) => {
+                const nav = bottomNav[key];
+                return (
+                  <BottomNavigationAction
+                    key={key}
+                    icon={nav.icon}
+                    value={nav.value}
+                    onTouchEnd={() => handleClick(nav)}
+                    onClick={() => !initialState?.isMobile && handleClick(nav)}
+                    sx={{
+                      "&:after": {
+                        content: `""`,
+                        position: "absolute",
+                        height: 2,
+                        width: 0,
+                        borderRadius: 1,
+                        background: (theme) => theme.palette.primary.main,
+                        top: 1,
+                        transition: `width 0.3s linear`,
+                        boxShadow: 1,
+                      },
+                    }}
+                  />
+                );
+              })}
             </BottomNavigation>
           </Paper>
         </Box>

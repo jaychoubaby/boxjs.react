@@ -4,6 +4,7 @@ import { colorText } from "@/utils";
 import { history, useModel, useParams } from "@@/exports";
 import { CopyAll } from "@mui/icons-material";
 import CloseIcon from "@mui/icons-material/Close";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
 import {
@@ -23,10 +24,12 @@ import {
   styled,
   tabsClasses,
 } from "@mui/material";
+import Accordion from "@mui/material/Accordion";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import AccordionSummary from "@mui/material/AccordionSummary";
 import $copy from "copy-to-clipboard";
 import React, { useState } from "react";
 import uuid from "react-uuid";
-import ProFormSelectAppKey from "@/components/ProFormSelectAppKey";
 
 const CusBadge = styled(Badge)(({ theme }) => ({
   right: "unset",
@@ -166,7 +169,7 @@ export default function Page() {
           onClick={() => {
             let url = app.script || app.scripts?.[0]?.script || "";
             if (!url) return;
-            history.push("/code", { url });
+            history.push(`/code?url=${url}`);
           }}
         >
           {app.name}
@@ -199,24 +202,36 @@ export default function Page() {
           </Box>
         )}
       </Stack>
-      {app.descs_html?.length && (
-        <Paper key={"html"} sx={{ padding: 2, mb: 2 }} elevation={3}>
-          {app.descs_html.map((item, index) => {
-            return (
-              <CusTypography
-                color="grey"
-                display="block"
-                variant="caption"
-                sx={{ mb: 0 }}
-                key={`html-${index}`}
-                dangerouslySetInnerHTML={{ __html: item }}
-              />
-            );
-          })}
+      {app.descs_html?.length > 0 && (
+        <Paper>
+          <Accordion>
+            <AccordionSummary
+              sx={{ m: 0 }}
+              expandIcon={<ExpandMoreIcon />}
+              aria-controls={`panel-content`}
+              id={`panel-header`}
+            >
+              <Typography variant="body2">操作提示</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              {app.descs_html.map((item, index) => {
+                return (
+                  <CusTypography
+                    color="grey"
+                    display="block"
+                    variant="caption"
+                    sx={{ mb: 0 }}
+                    key={`html-${index}`}
+                    dangerouslySetInnerHTML={{ __html: item }}
+                  />
+                );
+              })}
+            </AccordionDetails>
+          </Accordion>
         </Paper>
       )}
 
-      {app.scripts?.length && (
+      {app.scripts && app.scripts?.length > 0 && (
         <Paper key="scripts" sx={{ padding: 2, mb: 2 }} elevation={3}>
           <Stack spacing={2}>
             <Stack
@@ -240,27 +255,19 @@ export default function Page() {
                     secondaryAction={
                       <IconButton
                         edge="end"
-                        sx={{ mr: -3.5, position: "relative" }}
                         aria-label={item.name}
                         onClick={() => {
+                          if (fetchRunScript.loading) return;
                           fetchRunScript.run({
                             url: item.script,
                             isRemote: true,
                           });
                         }}
                       >
-                        <PlayCircleFilledIcon />
-                        {fetchRunScript.fetches[item.script]?.loading && (
-                          <CircularProgress
-                            size={24}
-                            sx={{
-                              position: "absolute",
-                              top: "50%",
-                              left: "50%",
-                              marginTop: "-12px",
-                              marginLeft: "-12px",
-                            }}
-                          />
+                        {fetchRunScript.loading ? (
+                          <CircularProgress size={24} />
+                        ) : (
+                          <PlayCircleFilledIcon />
                         )}
                       </IconButton>
                     }
@@ -270,7 +277,7 @@ export default function Page() {
                       sx={{ fontWeight: 500 }}
                       component={"span"}
                       onClick={() => {
-                        history.push("/code", { url: item.script });
+                        history.push(`/code?url=${item.script}`);
                       }}
                     >
                       {`${index + 1}.${item.name}`}
@@ -283,7 +290,7 @@ export default function Page() {
         </Paper>
       )}
 
-      {app.settings?.length && (
+      {app.settings && app.settings?.length > 0 && (
         <Paper key={"setting"} sx={{ mb: 2 }} elevation={3}>
           <Stack spacing={2}>
             <Stack
@@ -323,7 +330,17 @@ export default function Page() {
               ) : null}
             </Stack>
           </Box>
-          <Box sx={{ p: 2 }}>
+          <Box
+            sx={{
+              p: 2,
+              ...(Number(usercfgs?.app_settings_height || "0") > 0
+                ? {
+                    maxHeight: `${usercfgs?.app_settings_height}px`,
+                    overflow: "auto",
+                  }
+                : {}),
+            }}
+          >
             <List disablePadding>
               {curSession?.datas.map((item: any) => {
                 return (
@@ -346,7 +363,11 @@ export default function Page() {
                           {item.val && (
                             <IconButton
                               onClick={() => {
-                                $copy(item.val);
+                                $copy(
+                                  typeof item.val === "object"
+                                    ? JSON.stringify(item.val)
+                                    : item.val
+                                );
                                 tip.alert({
                                   open: true,
                                   message: "复制成功",
@@ -479,7 +500,17 @@ export default function Page() {
           {appSession?.map((session, index) => {
             return (
               <TabPanel value={index} key={session.id} index={tabValue}>
-                <List disablePadding>
+                <List
+                  disablePadding
+                  sx={{
+                    ...(Number(usercfgs?.app_settings_height || "0") > 0
+                      ? {
+                          maxHeight: `${usercfgs?.app_settings_height}px`,
+                          overflow: "auto",
+                        }
+                      : {}),
+                  }}
+                >
                   {session?.datas.map((item) => {
                     return (
                       <ListItem sx={{ p: 0 }} key={item.key}>

@@ -1,13 +1,16 @@
 import ProFormSelectAppKey from "@/components/ProFormSelectAppKey";
 import config from "@/utils/config";
 import { useModel } from "@@/exports";
+import DeleteIcon from "@mui/icons-material/Delete";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
+  AccordionActions,
   Box,
   Button,
   Chip,
   Divider,
   FormHelperText,
+  IconButton,
   Paper,
   Stack,
   TextField,
@@ -17,11 +20,13 @@ import Accordion from "@mui/material/Accordion";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import $copy from "copy-to-clipboard";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 export default function Database() {
   const form = useForm();
   const tip = useModel("alert");
+  const [delType, setDelType] = useState<Record<string, "delKey" | "all">>({});
   const { expanded, handleExpandedChange } = useModel("app");
   const { fetchDataKey, fetchSave } = useModel("api");
   const { initialState } = useModel("@@initialState");
@@ -45,6 +50,7 @@ export default function Database() {
     <Stack spacing={3} m={1}>
       {accordion.map((tab, index) => {
         if (!tab.data.length) return null;
+        const delTypeItem = delType[tab.key];
         return (
           <Stack key={tab.title} direction="column" mt={2}>
             <Accordion
@@ -74,14 +80,18 @@ export default function Database() {
                               `0px 0 1px ${theme.palette.primary.main}`,
                           }}
                           onDelete={() => {
-                            fetchSave.run([
+                            const formData: any[] = [
                               {
                                 key: tab.key,
                                 val: tab.data.filter(
                                   (cache: string) => cache !== item
                                 ),
                               },
-                            ]);
+                            ];
+                            if (delTypeItem === "all") {
+                              formData.push({ key: tab.key, val: null });
+                            }
+                            fetchSave.run(formData);
                           }}
                           onClick={() => {
                             form.setValue("key", item);
@@ -95,6 +105,57 @@ export default function Database() {
                   })}
                 </div>
               </AccordionDetails>
+              <Divider />
+              <AccordionActions>
+                <Stack
+                  direction="row"
+                  alignItems={"center"}
+                  justifyContent={"space-between"}
+                  sx={{ width: `100%`, p: 1 }}
+                >
+                  <Chip
+                    label="删除键和值"
+                    size="small"
+                    onClick={() => setDelType({ ...delType, [tab.key]: "all" })}
+                    color={delTypeItem === "all" ? "primary" : undefined}
+                  />
+                  <Chip
+                    label="仅删除键"
+                    size="small"
+                    onClick={() =>
+                      setDelType({ ...delType, [tab.key]: "delKey" })
+                    }
+                    color={
+                      delTypeItem === "delKey" || !delTypeItem
+                        ? "primary"
+                        : undefined
+                    }
+                  />
+                  <IconButton
+                    aria-label="delete"
+                    color="primary"
+                    sx={{ fontSize: 16 }}
+                    onClick={() => {
+                      const formData: any[] = [
+                        {
+                          key: tab.key,
+                          val: [],
+                        },
+                      ];
+
+                      if (delTypeItem === "all") {
+                        tab.data.map((dat) => {
+                          formData.push({ key: dat, val: null });
+                        });
+                      }
+                      fetchSave.run(formData);
+                    }}
+                  >
+                    <DeleteIcon color="primary" sx={{ fontSize: 16 }} />
+                    清空
+                  </IconButton>
+                </Stack>
+              </AccordionActions>
             </Accordion>
           </Stack>
         );

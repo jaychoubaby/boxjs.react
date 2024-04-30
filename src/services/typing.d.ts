@@ -164,6 +164,8 @@ declare namespace boxjs {
     debugger_web: string;
     sysapppanel: number;
 
+    app_settings_height:string;
+
     [key: string]: any;
   }
 
@@ -219,15 +221,18 @@ declare namespace boxjs {
       | "checkboxes"
       | "colorpicker"
       | "number"
-      | "cacheKey";
+      | "cacheKey"
+      | "modalSelects";
     desc: string;
     disabled?: boolean;
-    items?: Item[];
+    items?: Item[] | string[];
     placeholder?: string;
     autoGrow?: boolean;
     rows?: number;
     primary?: string[];
     child?: Setting[];
+    childScripts?: Script[];
+    readCache?: string;
     pattern?: RegExp;
     formName: string;
   }
